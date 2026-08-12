@@ -57,6 +57,56 @@ app.get('/test-direct', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.get('/buses/parsed', async (req, res) => {
+
+    try {
+        const response = await axios.get(BODS_API_URL, {
+            params: {api_key: API_KEY}
+        });
+
+        // Convert XML to JSON
+        const parser = new XMLParser();
+        const jsonData = parser.parse(response.data);
+
+        //Navigate to the array of buses
+        const vehicleActivities = jsonData?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity;
+
+        //Check the bus data is actually available
+        if (!vehicleActivities || !Array.isArray(vehicleActivities)) {
+            return res.status(404).json({
+                message: 'No bus data found',
+                fullData: jsonData
+            })
+        }
+
+        //Turning each bus into a simpler object
+        const buses = vehicleActivities.map((activity) => {
+            // Extracting the MonitoredVehicalJourney
+            const journey = activity.MonitoredVehicleJourney;
+
+            return {
+                id: activity.ItemIdentifier,
+                routeNumber: journey?.PublishedLineName,
+                origin: journey?.OriginName,
+                destination: journey?.DestinationName,
+                longitude: journey?.VehicleLocation?.Longitude,
+                latitude: journey?.VehicleLocation?.Latitude,
+                bearing: journey?.Bearing,
+                vehicleRef: journey?.VehicleRef,
+                recordedAt: activity.RecordedAtTime
+            };
+        });
+
+        res.json({
+            message: 'Bus data parsed successfully',
+            count: buses.length,
+            buses: buses
+        });
+    } catch (error) {
+        res.status(500).json({error: error.message});
+    }
 });
+
+    app.listen(PORT, () => {
+        console.log('Server is running on https://localhost:&{PORT}');
+    });
