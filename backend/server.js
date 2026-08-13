@@ -1,10 +1,12 @@
 require('dotenv').config({ path: '.env'});
 const express = require('express');
 const axios = require('axios');
-const {XMLParser} = require("fast-xml-parser");
+const {XMLParser} = require("fast-xml-parser")
+const cors = require('cors')
 
 
 const app = express();
+app.use(cors());
 const PORT = 3000;
 
 const BODS_API_URL ='https://data.bus-data.dft.gov.uk/api/v1/datafeed/20422/?api_key=f70ed1da2a3bf075c493c4077c7125a1ae9d7fb6';
@@ -108,5 +110,5 @@ app.get('/buses/parsed', async (req, res) => {
 });
 
     app.listen(PORT, () => {
-        console.log('Server is running on https://localhost:&{PORT}');
+        console.log('Server is running on http://localhost:&{PORT}');
     });
