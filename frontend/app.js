@@ -15,12 +15,16 @@ let busMarkers = {};
 // Function to fetch bus data from our backend
 async function fetchBuses() {
     try {
-        const response = await
-            fetch('http://localhost:3000/buses/parsed');
-        const data = await response.json();
+        const response = await fetch('http://localhost:3000/buses/parsed');
 
+        if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}`);
+            return [];
+        }
+
+        const data = await response.json();
         console.log(`Fetched ${data.count} buses`);
-        return data.buses;
+        return data.buses || [];
     } catch (error) {
         console.error(`Error fetching buses:`, error);
         return [];
@@ -96,8 +100,13 @@ async function fetchBuses() {
 
                             const busIcon = L.divIcon({
                                 html: `<div style="background-color: ${color}; width: 100%; height:
-                                100%; border-radius: 4px; border: 2px solid white; transform: 
-                                rotate(${rotation}deg);"></div>`,
+                                100%; border-radius: 4px; border: 2px solid white; transform:
+                                rotate(${rotation}deg); display: flex; align-items: center;
+                                justify-content: center;"><span style="color: white; font-size: 9px;
+                                font-weight: bold; transform: rotate(-${rotation}deg);">
+                                ${bus.routeNumber}
+                                    </span>
+                                </div>`,
                                 className: 'bus-icon',
                                 iconSize: [18, 12]
                             });

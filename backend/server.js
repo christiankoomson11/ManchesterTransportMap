@@ -9,15 +9,17 @@ const app = express();
 app.use(cors());
 const PORT = 3000;
 
-const BODS_API_URL ='https://data.bus-data.dft.gov.uk/api/v1/datafeed/20422/?api_key=f70ed1da2a3bf075c493c4077c7125a1ae9d7fb6';
-const API_KEY = process.env.BOS_API_KEY;
+
+const BODS_API_URL = 'https://data.bus-data.dft.gov.uk/api/v1/datafeed/25671/';
+const API_KEY = process.env.BODS_API_KEY;
 
 
 app.get('/', (req, res) => {
     res.json({ message: 'Transport Map API v2' });
 });
 
-app.get('/buses', async (req, res) => {
+app.get('/buses', async (req
+                         , res) => {
     try {
         const response = await axios.get(BODS_API_URL, {
             params: {api_key: API_KEY}
@@ -110,5 +112,5 @@ app.get('/buses/parsed', async (req, res) => {
 });
 
     app.listen(PORT, () => {
-        console.log('Server is running on http://localhost:&{PORT}');
+        console.log(`Server is running on http://localhost:${PORT}`);
     });
