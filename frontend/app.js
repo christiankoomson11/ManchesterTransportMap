@@ -1,16 +1,93 @@
 
 // Initializing the map centred onto Manchester
-const map = L.map('map').setView([53.4808, -2.2426], 13);
+const map = L.map('map').setView([53.4808, -2.2426], 15);
 
-// Adding the title layer (the actual map images)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap contributors © CARTO',
-    maxZoom: 19
+// Adding the tile layer (the actual map images)
+// Using Stadia Maps dark theme (free, no API key required)
+L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+    maxZoom: 20
 }).addTo(map);
 
 console.log('Map initialized');
 
 let busMarkers = {};
+let activeRoutes = new Set();
+let selectedRoute = null;
+
+
+function updateRouteSideBar(buses) {
+    const routes = new Map();
+    buses.forEach(bus => {
+        if (bus.routeNumber) {
+            routes.set(bus.routeNumber, {
+                number: bus.routeNumber,
+                color: getRouteColor(bus.routeNumber),
+                count: (routes.get(bus.routeNumber)?.count || 0) + 1
+            });
+        }
+    });
+
+    const sortedRoutes = Array.from(routes.values()).sort((a, b) =>
+        parseInt(a.number) - parseInt(b.number)
+    );
+
+    const routeList = document.getElementById('route-list');
+    routeList.innerHTML = sortedRoutes.map(route => `
+      <div class="route-item" data-route="${route.number}">
+        <div class="route-color" style = "background-color: ${route.color};"></div>
+                <span>Route ${route.number}</span>
+                <span style="margin-left: auto; color:
+                #aaa;">${route.count}</span>
+                </div>
+                `).join('');
+    document.querySelectorAll('.route-item').forEach( item => {
+        item.addEventListener('click', () => {
+            const route = item.getAttribute('data-route');
+            toggleRouteFilter(route);
+        });
+    });
+}
+
+function toggleRouteFilter(routeNumber) {
+    if(selectedRoute === routeNumber) {
+        selectedRoute = null;
+        showAllBuses();
+    } else {
+        selectedRoute = routeNumber;
+        filterBusesByRoute(routeNumber);
+    }
+    updateRouteSideBarSelection();
+}
+
+function filterBusesByRoute(routeNumber) {
+    Object.keys(busMarkers).forEach(vehicleRef => {
+        const marker = busMarkers[vehicleRef].marker;
+        const markerRoute = marker.getPopup().getContent().match(/Route (\w+)/)?.[1];
+
+        if (markerRoute === routeNumber) {
+            marker.setOpacity(1.0);
+        } else {
+            marker.setOpacity(0.2);
+        }
+    });
+}
+
+function showAllBuses() {
+    Object.keys(busMarkers).forEach(vehicleRef => {
+        busMarkers[vehicleRef].marker.setOpacity(1.0);
+    });
+}
+
+function updateRouteSideBarSelection() {
+    document.querySelectorAll('.route-item').forEach( item => {
+        if (item.getAttribute('data-route') === selectedRoute) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+}
 
 // Function to fetch bus data from our backend
 async function fetchBuses() {
@@ -148,19 +225,19 @@ async function fetchBuses() {
 
             // This is the function to update bus positions
             async function updateBuses() {
-            console.log('Updating bus positions...');
-            const buses = await fetchBuses();
-            updateBusMarkers(buses);
-            console.log('Buses updated on map');
+                console.log('Updating bus positions...');
+                const buses = await fetchBuses();
+                updateBusMarkers(buses);
+                updateRouteSideBar(buses);
+                console.log('Buses updated on map');
             }
 
             // The initial load
             updateBuses();
 
-            //Auto refresh every 3 seconds (IF REFRESH FREEZES REMEMBER TO CHECK THESE LINES CK)
-            //Ask Samir and Ben how to optimize bus updates my current solution and Claude solution is slow
-            setInterval(updateBuses, 1900);
-            console.log('Auto refresh enabled: updating every 30 seconds');
+            // Auto refresh every 10 seconds (optimized for multiple datafeeds)
+            setInterval(updateBuses, 10000);
+            console.log('Auto refresh enabled: updating every 10 seconds');
 
 
 
