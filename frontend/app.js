@@ -17,6 +17,12 @@ let selectedRoute = null;
 
 
 function updateRouteSideBar(buses) {
+    // Update total bus count
+    const totalBusCount = document.getElementById('total-bus-count');
+    if (totalBusCount) {
+        totalBusCount.textContent = buses.length;
+    }
+
     const routes = new Map();
     buses.forEach(bus => {
         if (bus.routeNumber) {
@@ -34,14 +40,18 @@ function updateRouteSideBar(buses) {
 
     const routeList = document.getElementById('route-list');
     routeList.innerHTML = sortedRoutes.map(route => `
-      <div class="route-item" data-route="${route.number}">
-        <div class="route-color" style = "background-color: ${route.color};"></div>
-                <span>Route ${route.number}</span>
-                <span style="margin-left: auto; color:
-                #aaa;">${route.count}</span>
-                </div>
-                `).join('');
-    document.querySelectorAll('.route-item').forEach( item => {
+        <div class="route-item" data-route="${route.number}">
+            <div class="route-color" style="color: ${route.color};">
+                <span class="route-number">${route.number}</span>
+            </div>
+            <div class="route-info">
+                <span class="route-label">Route ${route.number}</span>
+                <span class="route-count">${route.count}</span>
+            </div>
+        </div>
+    `).join('');
+
+    document.querySelectorAll('.route-item').forEach(item => {
         item.addEventListener('click', () => {
             const route = item.getAttribute('data-route');
             toggleRouteFilter(route);
